@@ -2,6 +2,9 @@
 <svelte:head>
   <title>Contact me</title>
 </svelte:head>
+
+<h1>Hey! Contact me!</h1>
+
 <form action="mailto:foo@example.com" method="GET">
     <label for="email">Email: <input id="email" type="email" name="text_email"> </label>
     <label for="subject">Subject: <input id="subject" type="text" name="text_subject"> </label>

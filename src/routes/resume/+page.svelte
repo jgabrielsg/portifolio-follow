@@ -8,37 +8,38 @@
 <section>
     <header>Interests</header>
     <ul>
-        <li>Scaring (Formerly) </li>
+        <li>Programming </li>
         <li>Comedy</li>
-        <li>His Relationship with Celia Mae </li>
-        <li>The Theater</li>
+        <li>Football (the real one)</li>
+        <li>Breathing</li>
     </ul>
     </section>
 <section>
     <header>Education</header>
     <ul>
-        <li>Monsters University, Scaring Program</li>
-        <li>Codeacademy</li>
+        <li>IMPA - PICme</li>
+        <li>FGV - Getúlio Vargas Foundation</li>
     </ul>
     </section>
 <section>
     <header>Experience</header>
     <ul>
-        <li>Monsters, Inc</li>
+        <li>FGV Jr.</li>
         <ul>
-            <li>Worker in mailroom</li>
-            <li>Scarer assistant</li>
-            <li>Co-CEO of Monsters, Inc.</li>
-            <li>Jokester</li>
+            <li>Dashboards</li>
+            <li>Website Development</li>
+            <li>Fast API</li>
+            <li>Project Management</li>
         </ul>
     </ul>
     </section>
 <section>
     <header>Extracurriculars</header>
     <ul>
-        <li>Won the Scare Games with <a href="https://disney.fandom.com/wiki/Oozma_Kappa">Oozma Kappa</a></li>
-        <li>Helped transition Monsters, Inc. into a laugh-based energy company.</li>
-        <li>Became a top comedian and mentor for future monsters</li>
+        <li>Won 3 <a href="http://www.obmep.org.br/">OBMEP</a> gold medals</li>
+        <li>Loved someone</li>
+        <li>Tried to forget the pain</li>
+        <li>Never did...</li>
     </ul>
 </section>
 </div>
