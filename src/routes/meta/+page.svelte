@@ -1,5 +1,7 @@
 <script>
     import * as d3 from "d3";
+    import Bar from '$lib/Bar.svelte';
+    
 
     import {
         computePosition,
@@ -47,6 +49,7 @@
             hourFrac: datetime.getHours() + datetime.getMinutes() / 60,
             totalLines: lines.length
         };
+        commits = d3.sort(commits, d => -d.totalLines);
 
         // Like ret.lines = lines
         // but non-enumerable so it doesn’t show up in JSON.stringify
@@ -94,6 +97,7 @@
 
     let commitTooltip
     let tooltipPosition = {x: 0, y: 0};
+    let clickedCommits = [];
 
     async function dotInteraction (index, evt) {
         let hoveredDot = evt.target;
@@ -110,11 +114,36 @@
         else if (evt.type === "mouseleave") {
             hoveredIndex = -1
         }
+
+        else if (evt.type === "click") {
+            let commit = commits[index]
+            if (!clickedCommits.includes(commit)) {
+                // Add the commit to the clickedCommits array
+                clickedCommits = [...clickedCommits, commit];
+            }
+            else {
+                    // Remove the commit from the array
+                    clickedCommits = clickedCommits.filter(c => c !== commit);
+            }
+        }
     }
 
-    $: rScale = d3.scaleLinear()
+    $: rScale = d3.scaleSqrt()
                 .domain(d3.extent(commits.map(d=>d.totalLines)))
                 .range([2, 30]);
+    
+    $: allTypes = Array.from(new Set(data.map(d => d.type)));
+    $: selectedLines = (clickedCommits.length > 0 ? clickedCommits : commits).flatMap(d => d.lines);
+
+    $: selectedCounts = d3.rollup(
+        selectedLines,
+        v => v.length,
+        d => d.type
+    );
+
+    $: languageBreakdown = allTypes.map(type => [type, selectedCounts.get(type) || 0]);
+
+        
     
 </script>
 
@@ -148,6 +177,8 @@
             <circle
                 on:mouseenter={evt => dotInteraction(index, evt)}
                 on:mouseleave={evt => dotInteraction(index, evt)}
+                on:click={ evt => dotInteraction(index, evt) }
+                class:selected={ clickedCommits.includes(commit) }
                 cx={ xScale(commit.datetime) }
                 cy={ yScale(commit.hourFrac) }
                 r={ rScale(commit.totalLines) }
@@ -174,6 +205,7 @@
     <!-- Add: Time, author, lines edited -->
 </dl>
 
+<Bar data={languageBreakdown} width={width} />
 
 
 
@@ -210,7 +242,9 @@
         }
     }
 
-
+    .selected {
+        fill: var(--color-accent);
+    }
 
     .info dt{
         grid-column:1;
