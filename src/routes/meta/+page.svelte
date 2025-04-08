@@ -18,19 +18,19 @@
 
     $: xScale = d3.scaleTime()
                 .domain([minDate, maxDatePlusOne])
-                .range([0, width])
+                .range([usableArea.left, usableArea.right])
                 .nice();
 
     $: yScale = d3.scaleLinear()
                 .domain([24, 0])
-                .range([height, 0]);
+                .range([usableArea.top, usableArea.bottom]);
 
     let data = [];
     let commits = [];
 
 
     onMount(async () => {
-        data = await d3.csv("/loc.csv", row => ({
+        data = await d3.csv("./loc.csv", row => ({
             ...row,
             line: Number(row.line), // or just +row.line
             depth: Number(row.depth),
