@@ -3,6 +3,22 @@
   import Project from "$lib/Project.svelte";
 
   // let profileData = fetch("https://api.github.com/users/juan1t0");
+
+  import { onMount } from "svelte";
+
+  let githubData = null;
+  let loading = true;
+  let error = null;
+
+  onMount(async () => {
+      try {
+          const response = await fetch("https://api.github.com/users/jgabrielsg");
+          githubData = await response.json();
+      } catch (err) {
+          error = err;
+      }
+      loading = false;
+  });
 </script>
 
 <svelte:head>
@@ -14,30 +30,23 @@
 
 <p>I am João Gabriel. I live in Rio. I am alive.
 </p>
-{#await fetch("https://api.github.com/users/jgabrielsg")}
-  <span>Loading...</span>
-{:then response}
-  {#await response.json()}
-    <span>Decoding...</span>
-  {:then data} 
+{#if loading}
+    <p>Loading...</p>
+{:else if error}
+    <p class="error">Something went wrong: {error.message}</p>
+{:else}
     <section>
-      <h2>My Github Stats</h2>
-      <dl>
-        <dt>Followers</dt>
-        <dd>{data.followers}</dd>
-        <dt>Following</dt>
-        <dd>{data.following}</dd>
-        <dt>Public Repos</dt>
-        <dd>{data.public_repos}</dd>
-      </dl>
+        <h2>My GitHub Stats</h2>
+        <dl>
+            <dt>Followers</dt>
+            <dd>{githubData.followers}</dd>
+            <dt>Following</dt>
+            <dd>{githubData.following}</dd>
+            <dt>Public Repositories</dt>
+            <dd>{githubData.public_repos}</dd>
+        </dl>
     </section>
-  {:catch error}
-    <span class="error">Something went wrong: {error.message}</span>
-  {/await}
-  {:catch error}
-    <span class="error">Something went wrong: {error.message}</span>
-{/await}
-
+{/if}
 <h2>
   Latest Projects
 </h2>
@@ -48,26 +57,5 @@
 </div>
 
 <style>
-  dl{
-    display: grid;
-    grid-template-columns: auto;
-  }
-  dt{
-    grid-row: 1;
-    font-family: inherit;
-    font-weight: bold;
-    color: var(--border-gray);
-    text-transform: uppercase;
-  }
-  dd{
-    font-family: inherit;
-    font-weight: bold;
-  }
-  section{
-    border-width:0.15em;
-  	border-style:solid;
-	  border-color:var(--border-gray);
-    padding-left: 1em;
-    padding-right: 1em;
-  }
+
 </style>
