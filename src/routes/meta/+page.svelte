@@ -55,7 +55,7 @@
         let {author, date, time, timezone, datetime} = first;
         let ret = {
             id: commit,
-            url: "https://github.com/jgabrielsg/PathSeekerAlgorithm/commit/" + commit,
+            url: "https://github.com/jgabrielsg/portifolio-follow/commit/" + commit,
             author, date, time, timezone, datetime,
             hourFrac: datetime.getHours() + datetime.getMinutes() / 60,
             totalLines: lines.length
