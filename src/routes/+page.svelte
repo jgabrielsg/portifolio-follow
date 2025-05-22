@@ -56,6 +56,3 @@
 {/each}
 </div>
 
-<style>
-
-</style>

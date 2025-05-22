@@ -1,7 +1,10 @@
 <script>
     import * as d3 from "d3";
-    import Bar from '$lib/Bar.svelte';
-    
+    import StackedBar from '$lib/StackedBar.svelte';
+    import FileLines from '$lib/FileLines.svelte';
+    import Scrolly from "svelte-scrolly";
+
+    const colorScale = d3.scaleOrdinal(d3.schemeTableau10);
 
     import {
         computePosition,
@@ -9,7 +12,7 @@
         offset,
     } from '@floating-ui/dom';
 
-    import { onMount } from "svelte";
+    import { onMount, onDestroy } from "svelte";
 
     $: minDate = d3.min(commits.map(d => d.date));
     $: maxDate = d3.max(commits.map(d => d.date));
@@ -20,7 +23,9 @@
     $: timeScale = d3.scaleTime().domain([minDate,maxDate]).range([0,100]);
     $: commitMaxTime = timeScale.invert(commitProgress);
 
-    $: filteredCommits = commits.filter(commit => commit.datetime <= commitMaxTime)
+    $: filteredCommits = commits
+  .filter(commit => commit.datetime <= commitMaxTime)
+  .sort((a, b) => a.datetime - b.datetime);
 
     $: filteredMinDate = d3.min(filteredCommits.map(d => d.date));
     $: filteredMaxDate = d3.max(filteredCommits.map(d => d.date));
@@ -147,7 +152,7 @@
     $: filteredLines = data.filter(d => d.datetime <= commitMaxTime)
     
     $: allTypes = Array.from(new Set(filteredLines.map(d => d.type)));
-    $: selectedLines = (clickedCommits.length > 0 ? clickedCommits : commits).flatMap(d => d.lines);
+    $: selectedLines = (filteredCommits.length > 0 ? filteredCommits : commits).flatMap(d => d.lines);
 
     $: selectedCounts = d3.rollup(
         selectedLines,
@@ -156,6 +161,37 @@
     );
 
     $: languageBreakdown = allTypes.map(type => [type, selectedCounts.get(type) || 0]);
+
+    // 'languageBreakdown' no formato [ [label, count], ... ]
+    $: dataObject = Object.fromEntries(languageBreakdown);
+
+    $: keys = Object.keys(dataObject);
+
+    $: dataForStack = [dataObject]; // Array com 1 objeto
+
+    $: stackedData = d3.stack().keys(keys)(dataForStack);
+
+    $: total = d3.max(stackedData, series => d3.max(series, d => d[1])) || 1;
+
+    $: xScaleStack = d3.scaleLinear()
+                    .domain([0, total])
+                    .range([0, width - margin.left - margin.right]);
+
+    $: numCommits = filteredCommits.length || 1;
+    $: step = 100 / numCommits;
+
+    // Para mostrar até qual commit o texto está "ativo"
+    $: currentCommitIndex = Math.min(Math.floor(commitProgress / step), numCommits - 1);
+
+    const svgWidth = 0.7 * width;
+
+    onMount(() => {
+    document.body.classList.add('meta-page');
+    });
+
+    onDestroy(() => {
+    document.body.classList.remove('meta-page');
+    });
 </script>
 
 <svelte:head>
@@ -163,71 +199,80 @@
 </svelte:head>
 
 <h1>Meta</h1>
-
-
 <p>Total lines of code: {data.length}</p>
 
-<section>
-    <h2>Summary</h2>
-    <dl class="stats">
-    <dt>Total <abbr title="Lines of code">LOC</abbr></dt>
-    <dd>{filteredLines.length}</dd>
-    <dt>Files</dt>
-    <dd>{d3.groups(filteredLines, d => d.file).length}</dd>
-    <dt>Commits</dt>
-    <dd>{d3.groups(filteredLines, d => d.commit).length}</dd>
-    </dl>
-</section>
-
-<div class="slider-container">
-    <div class="slider">
-        <label for="slider">Show commits until:</label>
-        <input type="range" id="slider" name="slider" min=0 max=100 bind:value={commitProgress}/>
-    </div>
-    <time class="time-label">{commitMaxTime.toLocaleString()}</time>
-</div>
-
-<svg viewBox="0 0 {width} {height}">
-    <g transform="translate(0, {usableArea.bottom})" bind:this={xAxis} />
-    <g transform="translate({usableArea.left}, 0)" bind:this={yAxis} />
-    <g class="gridlines" transform="translate({usableArea.left}, 0)" bind:this={yAxisGridlines} />
-    <g class="dots">
-        {#each filteredCommits as commit, index }
+<Scrolly bind:progress={commitProgress} style="max-width: 600px; margin: auto;">
+    {#if filteredCommits.length === 0}
+      <p>Loading commits...</p>
+    {:else}
+      {#each filteredCommits as commit, index (commit.id)}
+        <p class="narrative" style="opacity: {commitProgress >= index * step ? 1 : 0.2}; transition: opacity 0.3s;">
+          On <strong>{commit.datetime.toLocaleString("en", { dateStyle: "full", timeStyle: "short" })}</strong>,  
+          {index === 0
+            ? `I made the first commit, starting the project. You can see it <a href="${commit.url}" target="_blank">here</a>.`
+            : `I added another commit. Check it <a href="${commit.url}" target="_blank">here</a>.`}
+          This commit changed <strong>{commit.totalLines}</strong> lines in <strong>{d3.groups(commit.lines, d => d.file).length}</strong> files.
+        </p>
+      {/each}
+      {/if}
+  
+    <svelte:fragment slot="viz">
+      <!-- Scatterplot com commits -->
+      <svg viewBox="0 0 {width} {height}" style="display: block; margin: 20px auto;">
+        <g transform="translate(0, {usableArea.bottom})" bind:this={xAxis} />
+        <g transform="translate({usableArea.left}, 0)" bind:this={yAxis} />
+        <g class="gridlines" transform="translate({usableArea.left}, 0)" bind:this={yAxisGridlines} />
+        <g class="dots">
+          {#each filteredCommits as commit, index}
             <circle
-                on:mouseenter={evt => dotInteraction(index, evt)}
-                on:mouseleave={evt => dotInteraction(index, evt)}
-                on:click={ evt => dotInteraction(index, evt) }
-                class:selected={ clickedCommits.includes(commit) }
-                cx={ xScale(commit.datetime) }
-                cy={ yScale(commit.hourFrac) }
-                r={ rScale(commit.totalLines) }
-                fill="steelblue"
-                fill-opacity="0.5"
+              on:mouseenter={evt => dotInteraction(index, evt)}
+              on:mouseleave={evt => dotInteraction(index, evt)}
+              on:click={evt => dotInteraction(index, evt)}
+              class:selected={clickedCommits.includes(commit)}
+              cx={xScale(commit.datetime)}
+              cy={yScale(commit.hourFrac)}
+              r={rScale(commit.totalLines)}
+              fill="steelblue"
+              fill-opacity="0.5"
+              style="cursor: pointer;"
             />
-        {/each}
+          {/each}
         </g>
-</svg>
-
-<dl class="info tooltip" hidden={hoveredIndex === -1} style="top: {tooltipPosition.y}px; left: {tooltipPosition.x}px" bind:this={commitTooltip}>
-    <dt>Commit</dt>
-    <dd><a href="{ hoveredCommit.url }" target="_blank">{ hoveredCommit.id }</a></dd>
-
-    <dt>Date</dt>
-    <dd>{ hoveredCommit.datetime?.toLocaleString("en", {dateStyle: "full"}) }</dd>
-
-    <dt>Author</dt>
-    <dd>{ hoveredCommit.author }</dd>
-
-    <dt>Time</dt>
-    <dd>{ hoveredCommit.time }</dd>
-</dl>
-
-<Bar data={languageBreakdown} width={width} />
-
-
-
+      </svg>
+  
+      <!-- Stacked Bar mostrando tipos -->
+      <StackedBar
+        {stackedData}
+        {keys}
+        {width}
+        barHeight={40}
+        xScale={xScaleStack}
+        colorScale={colorScale}
+      />
+      
+      <FileLines lines={filteredLines} width={svgWidth} colorScale={colorScale} />
+    </svelte:fragment>
+  
+</Scrolly>
 
 <style>
+    .narrative {
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+  }
+  .narrative a {
+    color: #007acc;
+    text-decoration: none;
+  }
+  .narrative a:hover {
+    text-decoration: underline;
+  }
+  .selected {
+    stroke: black;
+    stroke-width: 2px;
+  }
+  
     svg {
         overflow: visible;
     }
@@ -285,26 +330,31 @@
         }
         
         @starting-style {
-	r: 0;
-}
-
-        transition: all 200ms,
-            r calc(var(--r) * 100ms);
+            r: 0;}
+            transition: all 200ms,
+                r calc(var(--r) * 100ms);
     }
 
     .slider-container{
 	display:grid;
-}
-.slider{
-	display: flex;
-}
-#slider{
-	flex:1;
-}
-.time-label{
-	font-size: 0.75em;
-	text-align: right;
-}
+    }
+    .slider{
+        display: flex;
+    }
+    #slider{
+        flex:1;
+    }
+    .time-label{
+        font-size: 0.75em;
+        text-align: right;
+    }
+
+    :global(body.meta-page) {
+    width: 80%;
+    max-width: none;
+    margin-inline: auto; /* step 1 */
+	padding: 1cm; /* step 1 */
+    }
 
 </style>
 
