@@ -80,7 +80,7 @@
     });
     });
 
-    let width = 1000, height = 600;
+    let width = 800, height = 600;
     let margin = {top: 10, right: 10, bottom: 30, left: 20};
 
     let usableArea = {
@@ -250,10 +250,10 @@
         colorScale={colorScale}
       />
       
-      <FileLines lines={filteredLines} width={svgWidth} colorScale={colorScale} />
     </svelte:fragment>
-  
 </Scrolly>
+
+<FileLines lines={filteredLines} width={width} colorScale={colorScale} />
 
 <style>
     .narrative {
@@ -350,10 +350,10 @@
     }
 
     :global(body.meta-page) {
-    width: 70%;
-    max-width: none;
-    margin-inline: auto; /* step 1 */
-	padding: 1cm; /* step 1 */
+        width: 70%;
+        max-width: none;
+        margin-inline: auto; /* step 1 */
+        padding: 1cm; /* step 1 */
     }
 
 </style>
