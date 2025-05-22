@@ -130,4 +130,5 @@
             visibility: hidden;
         }
     }
+    
 </style>
