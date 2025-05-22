@@ -210,7 +210,7 @@
           On <strong>{commit.datetime.toLocaleString("en", { dateStyle: "full", timeStyle: "short" })}</strong>,  
           {index === 0
             ? `I made the first commit, starting the project. You can see it <a href="${commit.url}" target="_blank">here</a>.`
-            : `I added another commit. Check it <a href="${commit.url}" target="_blank">here</a>.`}
+            : `I added another commit. Check it in this link: <a href="${commit.url}" target="_blank">here</a>. It was a very important commit to me and definitely helped me become a better programming genius, as I currently am. I praise the existence of this commit and all its reasoning, he is full of love.`}
           This commit changed <strong>{commit.totalLines}</strong> lines in <strong>{d3.groups(commit.lines, d => d.file).length}</strong> files.
         </p>
       {/each}
@@ -350,7 +350,7 @@
     }
 
     :global(body.meta-page) {
-    width: 80%;
+    width: 70%;
     max-width: none;
     margin-inline: auto; /* step 1 */
 	padding: 1cm; /* step 1 */
